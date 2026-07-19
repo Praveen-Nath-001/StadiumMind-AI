@@ -1,0 +1,189 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  FAN
+  VOLUNTEER
+  OPERATOR
+  ADMIN
+}
+
+enum IncidentStatus {
+  REPORTED
+  DISPATCHED
+  RESOLVED
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  role          Role           @default(FAN)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  conversations AIConversation[]
+  feedback      Feedback[]
+  volunteerInfo VolunteerInfo?
+  notifications Notification[]
+}
+
+model VolunteerInfo {
+  id            String     @id @default(uuid())
+  userId        String     @unique
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        String     // IDLE, DISPATCHED, OFF_DUTY
+  currentZone   String
+  specialties   Json       // MEDICAL, MULTILINGUAL, SECURITY, MOBILITY
+  updatedAt     DateTime   @updatedAt
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique @db.VarChar(500)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
+model CrowdZone {
+  id             String   @id @default(uuid())
+  zoneName       String   @unique // e.g., "Gate A", "Section 104", "Food Court 1"
+  currentDensity Float    // 0.0 to 1.0
+  queueLength    Int
+  occupancyCount Int
+  status         String   // NORMAL, CONGESTED, CRITICAL
+  updatedAt      DateTime @updatedAt
+}
+
+model RouteNode {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  latitude     Float
+  longitude    Float
+  isAccessible Boolean  @default(true)
+  metadata     Json?    // e.g. { "type": "gate", "description": "Gate A" }
+}
+
+model RouteEdge {
+  id             String  @id @default(uuid())
+  fromNode       String
+  toNode         String
+  distance       Float
+  weightModifier Float   @default(1.0) // multiplier for crowd adjustments
+  isAccessible   Boolean @default(true)
+}
+
+model Incident {
+  id           String           @id @default(uuid())
+  type         String           // MEDICAL, FIRE, SECURITY, LOST_CHILD, CROWD_STAMPEDE, WEATHER
+  severity     IncidentSeverity @default(MEDIUM)
+  status       IncidentStatus   @default(REPORTED)
+  zone         String
+  description  String
+  aiSummary    String?
+  aiResponse   Json?            // { volunteerInstructions: string, publicAnnouncement: string, nearestExit: string }
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Announcement {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  type        String   // INFO, EMERGENCY, WEATHER
+  language    String   // en, es, fr, pt, ar, hi
+  createdAt   DateTime @default(now())
+}
+
+model TransportOption {
+  id          String   @id @default(uuid())
+  type        String   // METRO, BUS, WALKING, TAXI, RIDESHARE
+  name        String   // e.g., "Line 1 Metro"
+  status      String   // NORMAL, DELAYED, CONGESTED
+  waitTimeMin Int
+  capacityPct Int
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model AIConversation {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language  String      @default("en")
+  messages  AIMessage[]
+  createdAt DateTime    @default(now())
+}
+
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         // user, assistant
+  content        String
+  detectedLang   String?
+  createdAt      DateTime       @default(now())
+}
+
+model SustainabilityMetric {
+  id             String   @id @default(uuid())
+  timestamp      DateTime @default(now())
+  energyUsageKwh Float
+  wasteKg        Float
+  waterLiters    Float
+  emissionsCo2Kg Float
+  foodWasteKg    Float
+  aiInsights     String?
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+}
+
+model AnalyticsData {
+  id        String   @id @default(uuid())
+  metric    String   // e.g. "active_users", "incident_count"
+  value     Float
+  timestamp DateTime @default(now())
+}
