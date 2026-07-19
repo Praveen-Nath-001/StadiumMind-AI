@@ -12,19 +12,14 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:15-alpine
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: stadiummind_test
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: stadiummind_test
         ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - name: Checkout Code
@@ -47,14 +42,14 @@ jobs:
           cd backend
           npx prisma generate
         env:
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/stadiummind_test?schema=public"
+          DATABASE_URL: "mysql://root:root@localhost:3306/stadiummind_test"
 
       - name: Run Jest Tests
         run: |
           cd backend
           npm run test
         env:
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/stadiummind_test?schema=public"
+          DATABASE_URL: "mysql://root:root@localhost:3306/stadiummind_test"
           REDIS_URL: "redis://localhost:6379"
           JWT_ACCESS_SECRET: "ci-secret-key-for-stadiummind-access"
           JWT_REFRESH_SECRET: "ci-secret-key-for-stadiummind-refresh"
@@ -78,7 +73,7 @@ jobs:
       - name: Install Dependencies
         run: |
           cd frontend
-          npm ci
+          npm install --legacy-peer-deps
 
       - name: Next.js Compile and Build
         run: |
