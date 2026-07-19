@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "test:frontend": "npm --prefix frontend test",
+    "test:backend": "npm --prefix backend test",
+    "test": "npm run test:frontend && npm run test:backend",
+    "lint:frontend": "npm --prefix frontend run lint",
+    "lint": "npm run lint:frontend"
+  },
+  "devDependencies": {
+    "vercel": "^56.3.2"
+  }
+}
