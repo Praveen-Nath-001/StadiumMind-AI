@@ -89,7 +89,10 @@ export default function OperationsDashboard() {
     loadData();
 
     // Setup Websocket connections
-    const socket = io('http://localhost:5000');
+    const socketURL = typeof window !== 'undefined' && window.location.hostname.endsWith('loca.lt')
+      ? 'https://sour-rooms-slide.loca.lt'
+      : 'http://localhost:5000';
+    const socket = io(socketURL);
 
     socket.on('telemetry:crowd', (updatedZones) => {
       setCrowdZones(updatedZones);
