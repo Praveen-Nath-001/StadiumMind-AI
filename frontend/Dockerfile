@@ -16,12 +16,11 @@ FROM node:20-alpine AS runner
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install --only=production --legacy-peer-deps
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 COPY --from=builder /usr/src/app/.next ./.next
 COPY --from=builder /usr/src/app/public ./public
 COPY --from=builder /usr/src/app/next.config.ts ./next.config.ts
-COPY --from=builder /usr/src/app/next.config.js ./next.config.js 2>/dev/null || true
 
 EXPOSE 3000
 
