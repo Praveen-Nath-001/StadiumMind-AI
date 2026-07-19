@@ -104,7 +104,7 @@ export default function FanCompanion() {
 
     // Establish WebSocket Connection
     const socketURL = typeof window !== 'undefined' && window.location.hostname.endsWith('loca.lt')
-      ? 'https://sour-rooms-slide.loca.lt'
+      ? 'https://stadiummind-api.loca.lt'
       : 'http://localhost:5000';
     const socket = io(socketURL);
 

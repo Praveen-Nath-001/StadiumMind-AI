@@ -6,7 +6,7 @@ const getBaseURL = () => {
   if (isBrowser) {
     // If loaded on a localtunnel address, dynamically route API requests to public backend URL
     if (window.location.hostname.endsWith('loca.lt')) {
-      return 'https://sour-rooms-slide.loca.lt/api';
+      return 'https://stadiummind-api.loca.lt/api';
     }
     // If accessing frontend directly on port 3000 during dev, bypass proxy and route to backend port 5000
     if (window.location.port === '3000') {
